@@ -1,31 +1,30 @@
-//
-//  LiveActivityManager.swift
-//  ActivityLiveWords
-//
-//  Created by Nikita on 19.07.2024.
-//
-
 import Foundation
 import ActivityKit
-import os.log
-import UIKit
+import SwiftUI
 
 open class LiveActivityManager: NSObject, ObservableObject {
     public static let shared: LiveActivityManager = LiveActivityManager()
     
     private var currentActivity: Activity<LiveActivityAttributes>? = nil
-    
+    @Published var alertItem: AlertItem?
+
     override init() {
         super.init()
     }
     
     func startActivity() {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("You can't start live activity.")
+            alertItem = AlertItem(title: "Ошибка", message: "Вы не можете запустить Live Activity.")
             return
         }
         
-        let attributes = LiveActivityAttributes(name: "Live Activity Example")
+        // Проверка на наличие активной активности
+        if currentActivity != nil {
+            alertItem = AlertItem(title: "Ошибка", message: "Live Activity уже запущена.")
+            return
+        }
+        
+        let attributes = LiveActivityAttributes(name: "Пример Live Activity")
         let initialState = LiveActivityAttributes.ContentState(
             transcription: dataItems[0].transcription,
             title: dataItems[0].title,
@@ -35,17 +34,27 @@ open class LiveActivityManager: NSObject, ObservableObject {
         do {
             let activity = try Activity<LiveActivityAttributes>.request(
                 attributes: attributes,
-                content: .init(state:initialState , staleDate: nil),
+                content: .init(state: initialState, staleDate: nil),
                 pushType: nil
             )
-            print("LiveActivityService: \(activity.id) Live Activity created.")
+            currentActivity = activity
+            print("LiveActivityService: \(activity.id) Live Activity создана.")
         } catch {
-            print("LiveActivityService: Error when make new Live Activity: \(error.localizedDescription).")
+            alertItem = AlertItem(title: "Ошибка", message: "Ошибка при создании Live Activity: \(error.localizedDescription).")
         }
-        
     }
     
-    func endActivity(dismissTimeInterval: Double?) {}
+    func endActivity() {
+        Task {
+            guard let activity = currentActivity else {
+                print("Нет активной Live Activity для завершения.")
+                return
+            }
+            await activity.end(dismissalPolicy: .immediate)
+            currentActivity = nil
+            print("LiveActivityService: Live Activity завершена.")
+        }
+    }
     
     func updateActivity(id: String, next: Bool, index: Int) {
         Task {

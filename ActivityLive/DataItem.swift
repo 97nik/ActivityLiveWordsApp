@@ -18,7 +18,6 @@ let dataItems: [DataItem] = [
     DataItem(transcription: "[ˈhɛtərəˌdɒks]", title: "Heterodox", description: "Having unusual or different beliefs."),
     DataItem(transcription: "[ɪɡˈzæmpl]", title: "Example", description: "A representative form or pattern."),
     DataItem(transcription: "[ˈæktɪv]", title: "Active", description: "Engaging or ready to engage in physically energetic pursuits."),
-    // Добавьте еще 7 элементов
     DataItem(transcription: "[kənˈklud]", title: "Conclude", description: "To bring to an end."),
     DataItem(transcription: "[ˈsʌbʤɪkt]", title: "Subject", description: "A person or thing that is being discussed."),
     DataItem(transcription: "[ˈɪnflʊəns]", title: "Influence", description: "The capacity to have an effect on the character, development, or behavior of someone or something."),

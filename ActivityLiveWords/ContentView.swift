@@ -7,6 +7,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var liveActivityManager = LiveActivityManager.shared
+    
     var body: some View {
         VStack() {
             Spacer()
@@ -28,6 +30,9 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(LinearGradient(gradient: Gradient(colors: [Color(red: 0.4, green: 0.1, blue: 0.6), Color(red: 0.1, green: 0.3, blue: 0.7)]), startPoint: .top, endPoint: .bottom))
+        .alert(item: $liveActivityManager.alertItem) { alertItem in
+                   Alert(title: Text(alertItem.title), message: Text(alertItem.message), dismissButton: .default(Text("OK")))
+               }
     }
 }
 
