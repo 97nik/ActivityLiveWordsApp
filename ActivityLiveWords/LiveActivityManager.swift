@@ -39,6 +39,15 @@ open class LiveActivityManager: NSObject, ObservableObject {
             )
             currentActivity = activity
             print("LiveActivityService: \(activity.id) Live Activity создана.")
+            
+            Task {
+                for await state in activity.activityStateUpdates {
+                    if state == .dismissed {
+                        print("Live Activity была удалена пользователем.")
+                        self.currentActivity = nil
+                    }
+                }
+            }
         } catch {
             alertItem = AlertItem(title: "Ошибка", message: "Ошибка при создании Live Activity: \(error.localizedDescription).")
         }
