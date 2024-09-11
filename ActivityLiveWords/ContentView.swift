@@ -8,6 +8,8 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var liveActivityManager = LiveActivityManager.shared
+    @Environment(\.scenePhase) var scenePhase
+       @State var backgroundTask: UIBackgroundTaskIdentifier?
     
     var body: some View {
         VStack() {
@@ -27,6 +29,21 @@ struct ContentView: View {
                     .cornerRadius(10)
             })
             .padding(.bottom, 64)
+            Button(action: {
+                Task {
+                    await LiveActivityManager.shared.nextCardLiveActivity()
+                }
+            }, label: {
+                Text("Update Activity")
+                    .font(.title)
+                    .foregroundColor(.white)
+                    .frame(width: 200, height: 50)
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            })
+            .padding(.bottom, 64)
+            
+            
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(LinearGradient(gradient: Gradient(colors: [Color(red: 0.4, green: 0.1, blue: 0.6), Color(red: 0.1, green: 0.3, blue: 0.7)]), startPoint: .top, endPoint: .bottom))

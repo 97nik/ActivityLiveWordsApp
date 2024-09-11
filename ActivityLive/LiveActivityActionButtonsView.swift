@@ -11,28 +11,18 @@ import SwiftUI
 @available(iOS 16.1, *)
 struct LiveActivityActionButtonsView: View {
     let recordID: String
-    let next: Bool
+    let engLanguage: Bool
     let index: Int
     
     var body: some View {
         HStack {
-            if next {
-                Button(intent: CompleteTaskAppIntent(recordID: recordID, next: next, index: index), label: {
-                    Image(systemName: "chevron.right")
-                })
-                .foregroundColor(.white)
-                .frame(width: 30, height: 30)
-                .background(Color.gray.opacity(0.8))
-                .clipShape(Circle())
-            } else {
-                Button(intent: CompleteTaskAppIntent(recordID: recordID, next: next, index: index), label: {
-                    Image(systemName: "chevron.left")
-                })
-                .foregroundColor(.white)
-                .frame(width: 30, height: 30)
-                .background(Color.gray.opacity(0.8))
-                .clipShape(Circle())
-            }
+            Button(intent: CompleteTaskAppIntent(recordID: recordID, engLanguage: engLanguage, index: index), label: {
+                Image(systemName: "arrow.up.arrow.down")
+            })
+            .foregroundColor(.white)
+            .frame(width: 30, height: 30)
+            .background(Color.gray.opacity(0.8))
+            .clipShape(Circle())
         }
     }
 }

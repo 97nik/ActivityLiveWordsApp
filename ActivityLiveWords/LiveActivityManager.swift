@@ -1,17 +1,23 @@
 import Foundation
+import WidgetKit
 import ActivityKit
 import SwiftUI
+import BackgroundTasks
 
 open class LiveActivityManager: NSObject, ObservableObject {
-    public static let shared: LiveActivityManager = LiveActivityManager()
+    public static let shared: LiveActivityManager = LiveActivityManager(dataManager: DataManager.shared)
     
-    private var currentActivity: Activity<LiveActivityAttributes>? = nil
+     var currentActivity: Activity<LiveActivityAttributes>? = nil
     @Published var alertItem: AlertItem?
-
-    override init() {
-        super.init()
-    }
     
+    var dataManager : DataManager
+    var contentStateNow = LiveActivityAttributes.ContentState.self
+    
+
+    init(dataManager: DataManager) {
+        self.dataManager = dataManager
+    }
+
     func startActivity() {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             alertItem = AlertItem(title: "Ошибка", message: "Вы не можете запустить Live Activity.")
@@ -26,10 +32,11 @@ open class LiveActivityManager: NSObject, ObservableObject {
         
         let attributes = LiveActivityAttributes(name: "Пример Live Activity")
         let initialState = LiveActivityAttributes.ContentState(
-            transcription: dataItems[0].transcription,
-            title: dataItems[0].title,
-            description: dataItems[0].description,
-            index: 0
+            transcription: dataItems[dataManager.currentIndexLV].transcription,
+            title: dataItems[dataManager.currentIndexLV].title,
+            description: dataItems[dataManager.currentIndexLV].description,
+            engLanguage: true,
+            index: dataManager.currentIndexLV
         )
         do {
             let activity = try Activity<LiveActivityAttributes>.request(
@@ -53,37 +60,52 @@ open class LiveActivityManager: NSObject, ObservableObject {
         }
     }
     
-    func endActivity() {
+    func endActivity() {}
+
+    // Функция для обновления активности каждые 10 минут
+     func nextCardLiveActivity(){
         Task {
-            guard let activity = currentActivity else {
-                print("Нет активной Live Activity для завершения.")
+            guard let currentActivity = currentActivity else {
+                print("Live Activity не найдена.")
                 return
             }
-            await activity.end(dismissalPolicy: .immediate)
-            currentActivity = nil
-            print("LiveActivityService: Live Activity завершена.")
+            
+            var nextIndex = (dataManager.currentIndexLV - 1 + dataItems.count) % dataItems.count
+            nextIndex = (nextIndex + 2) % dataItems.count
+            
+            await dataManager.updateCurrentIndexLV(to: nextIndex)
+            
+            let updatedState = LiveActivityAttributes.ContentState(
+                transcription: dataItems[dataManager.currentIndexLV].transcription,
+                title: dataItems[dataManager.currentIndexLV].title,
+                description: dataItems[dataManager.currentIndexLV].description,
+                engLanguage: true,
+                index: dataManager.currentIndexLV
+            )
+            
+            // Отправляем обновление активности
+            await currentActivity.update(ActivityContent(state: updatedState, staleDate: Date.now, relevanceScore: 100), alertConfiguration: nil)
+            print("Live Activity обновлена.")
         }
     }
-    
-    func updateActivity(id: String, next: Bool, index: Int) {
+
+    func updateActivity(id: String, engLanguage: Bool, index: Int) {
         Task {
             guard let activity = Activity<LiveActivityAttributes>.activities.first(where: { $0.id == id }) else {
                 return
             }
-            var nextIndex = (index - 1 + dataItems.count) % dataItems.count
-
-            if next {
-                nextIndex = (nextIndex + 2) % dataItems.count
-            } else {
-                nextIndex = (nextIndex + dataItems.count) % dataItems.count
-            }
-
+            
+            let title = !engLanguage ? dataItems[index].title : dataItems[index].translation
+            let description = !engLanguage ? dataItems[index].description : dataItems[index].descriptionTranslation
+            
             let contentState = LiveActivityAttributes.ContentState(
-                transcription: dataItems[nextIndex].transcription,
-                title: dataItems[nextIndex].title,
-                description: dataItems[nextIndex].description,
-                index: nextIndex
+                transcription: dataItems[index].transcription,
+                title: title,
+                description: description,
+                engLanguage: !engLanguage,
+                index: index
             )
+            
             await activity.update(ActivityContent(state: contentState, staleDate: Date.now, relevanceScore: 100), alertConfiguration: nil)
         }
     }
